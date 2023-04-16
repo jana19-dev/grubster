@@ -1,0 +1,80 @@
+datasource db {
+  url      = env("DATABASE_URL")
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Store {
+  id          Int      @id @default(autoincrement())
+  name        String
+  address     String
+  phoneNumber String   @unique
+  appearance  Json // logo, banner, etc
+  admins      Admin[] // show store selection popup on login
+  items       Item[]
+  orders      Order[]
+  reviews     Review[]
+}
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  rating     Int
+  message    String
+  storeId    Int
+  store      Store    @relation(fields: [storeId], references: [id])
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [phoneNumber])
+}
+
+model Item {
+  id          Int      @id @default(autoincrement())
+  name        String
+  price       Float
+  discount    Float
+  description Json
+  picture     String
+  tags        String[] // for search and alergies
+  storeId     Int
+  store       Store    @relation(fields: [storeId], references: [id])
+  orders      Order[]
+}
+
+model Admin {
+  phoneNumber String   @id
+  createdAt   DateTime @default(now())
+  stores      Store[]
+}
+
+model Customer {
+  phoneNumber String   @id
+  createdAt   DateTime @default(now())
+  orders      Order[]
+  reviews     Review[]
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  READY
+  CANCELLED
+}
+
+model Order {
+  id            Int         @id @default(autoincrement())
+  createdAt     DateTime    @default(now())
+  estimatedTime Int // in minutes
+  customerId    String
+  customer      Customer    @relation(fields: [customerId], references: [phoneNumber])
+  items         Item[]
+  storeId       Int
+  store         Store       @relation(fields: [storeId], references: [id])
+  message       Json // customer info, preparation etc
+  coupon        Float
+  total         Float
+  status        OrderStatus
+  notice        Json
+}
